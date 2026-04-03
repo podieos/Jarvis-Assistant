@@ -57,7 +57,7 @@ async def receive_responses(session, stop_event: asyncio.Event):
             if content.model_turn:
                 for part in content.model_turn.parts:
                     if part.inline_data:
-                        SPEAKER.write(part.inline_data.data)
+                        await asyncio.to_thread(SPEAKER.write, part.inline_data.data)
 
             if content.turn_complete:
                 print()
