@@ -6,7 +6,6 @@ import time
 import json
 
 from pathlib import Path
-from playsound import playsound
 from openai import OpenAI
 from openwakeword.model import Model
 from openwakeword import utils
@@ -61,8 +60,12 @@ def init():
     LLM_INSTRUCTIONS = data["LLM_INSTRUCTIONS"]
 
     api_key = (data.get("API_KEY") or "").strip()
-    if not api_key:
-        api_key = (BASE_DIR / "api_key.txt").read_text(encoding="utf-8").strip()
+    if not api_key or api_key == "API_KEY":
+        key_file = BASE_DIR / "api_key.txt"
+        if key_file.exists():
+            api_key = key_file.read_text(encoding="utf-8").strip()
+        else:
+            raise ValueError("API key not set. Replace 'API_KEY' in config.json with your actual OpenAI key.")
     CLIENT = OpenAI(api_key=api_key)
 
     utils.download_models()
@@ -117,7 +120,7 @@ def wake_word():
             score = max(pred.values()) if isinstance(pred, dict) else float(pred)
 
             WAKE_FRAME_COUNT += 1
-            if (WAKE_FRAME_COUNT % WAKE_LOG_EVERY_N_FRAMES == 0) or (score >= WAKE_LOG_NEAR_THRESHOLD):
+            if (WAKE_FRAME_COUNT % WAKE_LOG_EVERY_N_FRAMES == 0) or (WAKE_LOG_NEAR_THRESHOLD > 0.0 and score >= WAKE_LOG_NEAR_THRESHOLD):
                 print(f"SCORE: {score:.2f}")
 
             if score >= THRESHOLD:
@@ -274,7 +277,7 @@ def tts(text):
     ) as response:
         response.stream_to_file(TTS_FILE_PATH)
 
-    # playsound(str(TTS_FILE_PATH)) # Windows
+    # from playsound import playsound; playsound(str(TTS_FILE_PATH)) # Windows (pip install playsound)
     # subprocess.run(["afplay", str(TTS_FILE_PATH)], check=False) # macOS
     # subprocess.run(["aplay", str(TTS_FILE_PATH)], check=False) # Linux
 
@@ -296,3 +299,10 @@ while True:
     except KeyboardInterrupt:
         print(" --- STOP ---")
         break
+    except Exception as e:
+        print(f"ERROR: {e}")
+        delete(SOX_TEMP)
+        delete(SOX_OUT)
+        delete(PHOTO_PATH)
+        delete(TTS_FILE_PATH)
+        print("--- RETRYING ---")
