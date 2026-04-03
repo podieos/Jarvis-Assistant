@@ -14,7 +14,7 @@ from openwakeword.model import Model
 
 WAKE_MODEL_PATH = "/hey_jarvis_v0.1.onnx"
 OPENAI_API_KEY = "API_KEY"
-MODEL = "gpt-realtime-mini"
+MODEL = "gpt-4o-mini-realtime-preview"
 VOICE = "echo"
 INSTRUCTIONS = (
     "You are JARVIS: calm, precise, efficient. Default language: English. Short answers. "
