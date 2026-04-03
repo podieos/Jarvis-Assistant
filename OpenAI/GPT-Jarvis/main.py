@@ -12,15 +12,16 @@ from openwakeword.model import Model
 from openwakeword import utils
 
 def init():
-    global API_KEY, HISTORY_PATH, MAX_HISTORY
+    global HISTORY_PATH, MAX_HISTORY
     global SR, FRAME_SAMPLES, THRESHOLD, COOLDOWN_S, OPEN_WAKEWORD_MODEL, YES_PATH
     global LAST_WAKE_TS, LAST_COOLDOWN_LOG_TS
     global WAKE_HITS_REQUIRED, WAKE_HIT_COUNT
     global WAKE_LOG_EVERY_N_FRAMES, WAKE_LOG_NEAR_THRESHOLD, WAKE_FRAME_COUNT
     global PHOTO_PATH, VISION_MODEL, VISION_INSTRUCTION, VISION_MAX_TOKENS
     global SOX_TEMP, SOX_OUT, STT_MODEL, STT_LANGUAGE
-    global TTS_FILE_PATH, TTS_MODEL, TTS_VOICE, TTS_INSTRUCTIONS
+    global TTS_FILE_PATH, TTS_MODEL, TTS_VOICE, TTS_INSTRUCTIONS, TTS_MIN_CHARS, TTS_MAX_CHARS
     global LLM_MODEL, LLM_MAX_TOKENS, LLM_INSTRUCTIONS
+    global CLIENT
 
     BASE_DIR = Path(__file__).parent
     with open(BASE_DIR / "config.json", "r", encoding="utf-8") as f:
@@ -52,6 +53,8 @@ def init():
     TTS_MODEL = data.get("TTS_MODEL") or data.get("TTS_GPT_MODEL")
     TTS_VOICE = data.get("TTS_VOICE") or data.get("TTS_GPT_VOICE")
     TTS_INSTRUCTIONS = data.get("TTS_INSTRUCTIONS") or data.get("TTS_GPT_INSTRUCTIONS")
+    TTS_MIN_CHARS = data.get("TTS_MIN_CHARS", 0)
+    TTS_MAX_CHARS = data.get("TTS_MAX_CHARS", 0)
 
     LLM_MODEL = data["LLM_MODEL"]
     LLM_MAX_TOKENS = data["LLM_MAX_TOKENS"]
@@ -60,7 +63,7 @@ def init():
     api_key = (data.get("API_KEY") or "").strip()
     if not api_key:
         api_key = (BASE_DIR / "api_key.txt").read_text(encoding="utf-8").strip()
-    API_KEY = OpenAI(api_key=api_key)
+    CLIENT = OpenAI(api_key=api_key)
 
     utils.download_models()
     OPEN_WAKEWORD_MODEL = Model(wakeword_models=["hey jarvis"], vad_threshold=0.5)
@@ -187,7 +190,7 @@ def vision(prompt):
     with open(PHOTO_PATH, "rb") as f:
         b64 = base64.b64encode(f.read()).decode("utf-8")
 
-    vision_resp = API_KEY.responses.create(
+    vision_resp = CLIENT.responses.create(
         model=VISION_MODEL,
         instructions=VISION_INSTRUCTION,
         max_output_tokens=VISION_MAX_TOKENS,
@@ -206,7 +209,7 @@ def vision(prompt):
 
 def stt():
     with open(SOX_OUT, "rb") as audio_file:
-        stt_resp = API_KEY.audio.transcriptions.create(
+        stt_resp = CLIENT.audio.transcriptions.create(
             model=STT_MODEL,
             file=audio_file,
             response_format="text",
@@ -221,7 +224,7 @@ def stt():
     return text
 
 def llm(text):
-    stream = API_KEY.responses.create(
+    stream = CLIENT.responses.create(
         model=LLM_MODEL,
         tools=[{"type": "web_search"}],
         tool_choice="auto",
@@ -253,12 +256,17 @@ def llm(text):
         return cam
 
     save_history(text, llm_resp)
-    print("ASSISTANT:", llm_resp)
     return llm_resp
 
 def tts(text):
     text = str(text).strip()
-    with API_KEY.audio.speech.with_streaming_response.create(
+
+    if TTS_MIN_CHARS and len(text) < TTS_MIN_CHARS:
+        return
+    if TTS_MAX_CHARS and len(text) > TTS_MAX_CHARS:
+        text = text[:TTS_MAX_CHARS]
+
+    with CLIENT.audio.speech.with_streaming_response.create(
         model=TTS_MODEL,
         voice=TTS_VOICE,
         input=text,
@@ -269,9 +277,8 @@ def tts(text):
     # playsound(str(TTS_FILE_PATH)) # Windows
     # subprocess.run(["afplay", str(TTS_FILE_PATH)], check=False) # macOS
     # subprocess.run(["aplay", str(TTS_FILE_PATH)], check=False) # Linux
-    delete(TTS_FILE_PATH)
 
-    raise RuntimeError("TTS playback is disabled (uncomment an OS-specific command).")
+    delete(TTS_FILE_PATH)
 
 while True:
     try:
