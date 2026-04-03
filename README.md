@@ -177,7 +177,7 @@ Download it from the [openWakeWord releases](https://github.com/dscripka/openWak
 You can also configure the model, voice, and instructions at the top of `main.py`:
 
 ```python
-MODEL        = "gpt-realtime-mini"
+MODEL        = "gpt-4o-mini-realtime-preview"
 VOICE        = "echo"
 INSTRUCTIONS = "You are JARVIS..."
 ```
@@ -227,8 +227,8 @@ Lower `THRESHOLD` / `WAKE_WORD_THRESHOLD` (try `0.3`). Score logs are printed to
 **`rec` or `sox` command not found**
 SoX is not installed or not in PATH. Install with `brew install sox` (macOS), `apt install sox` (Linux), or download from [sourceforge.net/projects/sox](https://sourceforge.net/projects/sox/) (Windows).
 
-**No audio output / recording fails**
-The OS-specific playback and record commands in `tts()` and `record()` are commented out by default. Uncomment the line matching your platform.
+**No audio output (TTS playback fails)**
+The TTS playback command in `tts()` is commented out by default. Uncomment the line matching your platform. The `yes.mp3` acknowledgment playback in `record()` is also commented out — uncomment that too if you want it.
 
 **Camera capture raises an error**
 Camera support is disabled by default. Uncomment the correct OS command inside `take_photo()`.
