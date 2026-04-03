@@ -39,7 +39,7 @@ Jarvis-Assistant/
 │   ├── GPT-Jarvis Realtime/
 │   │   └── main.py
 │   ├── GPT-STT/
-│   │   └── STT.py
+│   │   └── main.py
 │   └── GPT-Text/
 │       └── main.py
 └── Google/
@@ -99,7 +99,7 @@ For `GPT-Jarvis`, open `config.json` and replace `"API_KEY"` with your actual ke
 }
 ```
 
-For all other scripts, replace the placeholder at the top of `main.py` (or `STT.py`):
+For all other scripts, replace the placeholder at the top of `main.py`:
 
 ```python
 CLIENT = OpenAI(api_key="sk-...")    # OpenAI projects
@@ -108,8 +108,7 @@ CLIENT = genai.Client(api_key="...") # Google project
 
 **3. Run**
 ```bash
-python main.py   # most projects
-python STT.py    # GPT-STT
+python main.py   # all projects
 ```
 
 > **Wake word:** Say **"Hey Jarvis"** to activate any of the voice assistant projects.
@@ -191,8 +190,6 @@ Minimal transcription script. Set `FILE` to your audio file path and run — pri
 ```python
 FILE = "audio.mp3"
 ```
-
----
 
 ### GPT-Text
 
