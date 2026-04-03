@@ -12,7 +12,7 @@ import websocket
 
 from openwakeword.model import Model
 
-WAKE_MODEL_PATH = "/hey_jarvis_v0.1.onnx"
+WAKE_MODEL_PATH = "/path/to/hey_jarvis_v0.1.onnx"  # download from github.com/dscripka/openWakeWord/releases
 OPENAI_API_KEY = "API_KEY"
 MODEL = "gpt-4o-mini-realtime-preview"
 VOICE = "echo"
